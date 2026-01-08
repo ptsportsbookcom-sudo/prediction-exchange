@@ -1,54 +1,91 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useSimulator, MarketResult } from "@/context/SimulatorContext";
+import { useSimulator } from "@/context/SimulatorContext";
 
 export default function OperatorConsole() {
-  const { markets, createMarket, closeMarket, settleMarket } = useSimulator();
-  const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
+  const {
+    events,
+    markets,
+    selections,
+    createEvent,
+    openMarket,
+    closeMarket,
+    settleMarket,
+  } = useSimulator();
+
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventName, setEventName] = useState("");
-  const [odds, setOdds] = useState<string>("");
+  const [sport, setSport] = useState("Football");
+  const [homeOdds, setHomeOdds] = useState<string>("");
+  const [drawOdds, setDrawOdds] = useState<string>("");
+  const [awayOdds, setAwayOdds] = useState<string>("");
   const [liquidity, setLiquidity] = useState<string>("1000");
   const [settlingMarketId, setSettlingMarketId] = useState<string | null>(null);
-  const [settlementResult, setSettlementResult] = useState<MarketResult>(null);
+  const [winningSelectionId, setWinningSelectionId] = useState<string | null>(
+    null
+  );
 
   // Group markets by event
-  const eventsMap = useMemo(() => {
+  const marketsByEvent = useMemo(() => {
     const map = new Map<string, typeof markets>();
     markets.forEach((market) => {
-      const eventMarkets = map.get(market.eventName) || [];
+      const eventMarkets = map.get(market.eventId) || [];
       eventMarkets.push(market);
-      map.set(market.eventName, eventMarkets);
+      map.set(market.eventId, eventMarkets);
     });
     return map;
   }, [markets]);
 
-  const events = Array.from(eventsMap.keys());
-  const selectedMarkets = selectedEvent
-    ? eventsMap.get(selectedEvent) || []
+  const selectedMarkets = selectedEventId
+    ? marketsByEvent.get(selectedEventId) || []
     : [];
 
-  const handleCreateMarket = () => {
-    const oddsNum = parseFloat(odds);
-    const liquidityNum = parseFloat(liquidity) || 1000;
-    if (eventName.trim() && oddsNum > 1) {
-      createMarket(eventName.trim(), oddsNum, liquidityNum);
+  const handleCreateEvent = () => {
+    if (eventName.trim()) {
+      const eventId = createEvent(eventName.trim(), sport);
       setEventName("");
-      setOdds("");
-      setLiquidity("1000");
-      if (!selectedEvent) {
-        setSelectedEvent(eventName.trim());
+      setSport("Football");
+      if (!selectedEventId) {
+        setSelectedEventId(eventId);
       }
     }
   };
 
-  const handleSettle = (marketId: string) => {
-    if (settlementResult) {
-      settleMarket(marketId, settlementResult);
-      setSettlingMarketId(null);
-      setSettlementResult(null);
+  const handleOpenMarket = () => {
+    const home = parseFloat(homeOdds);
+    const draw = parseFloat(drawOdds);
+    const away = parseFloat(awayOdds);
+    const liquidityNum = parseFloat(liquidity) || 1000;
+
+    if (
+      selectedEventId &&
+      home > 1 &&
+      draw > 1 &&
+      away > 1 &&
+      homeOdds &&
+      drawOdds &&
+      awayOdds
+    ) {
+      openMarket(selectedEventId, home, draw, away, liquidityNum);
+      setHomeOdds("");
+      setDrawOdds("");
+      setAwayOdds("");
+      setLiquidity("1000");
     }
   };
+
+  const handleSettle = (marketId: string) => {
+    if (winningSelectionId) {
+      settleMarket(marketId, winningSelectionId);
+      setSettlingMarketId(null);
+      setWinningSelectionId(null);
+    }
+  };
+
+  const selectedEvent = selectedEventId
+    ? events.find((e) => e.id === selectedEventId)
+    : null;
 
   return (
     <div className="flex h-full bg-white">
@@ -66,34 +103,23 @@ export default function OperatorConsole() {
               placeholder="Event name"
               className="w-full px-2 py-1 text-xs border border-gray-300 rounded text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
-            <input
-              type="number"
-              value={odds}
-              onChange={(e) => setOdds(e.target.value)}
-              placeholder="Odds"
-              min="1"
-              step="0.01"
+            <select
+              value={sport}
+              onChange={(e) => setSport(e.target.value)}
               className="w-full px-2 py-1 text-xs border border-gray-300 rounded text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-            <input
-              type="number"
-              value={liquidity}
-              onChange={(e) => setLiquidity(e.target.value)}
-              placeholder="Liquidity (default: 1000)"
-              min="100"
-              step="100"
-              className="w-full px-2 py-1 text-xs border border-gray-300 rounded text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
+            >
+              <option>Football</option>
+            </select>
             <button
-              onClick={handleCreateMarket}
-              disabled={!eventName.trim() || !odds || parseFloat(odds) <= 1}
+              onClick={handleCreateEvent}
+              disabled={!eventName.trim()}
               className={`w-full px-2 py-1 text-xs font-medium ${
-                eventName.trim() && odds && parseFloat(odds) > 1
+                eventName.trim()
                   ? "bg-blue-600 text-white hover:bg-blue-700"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
             >
-              Create Market
+              Create Event
             </button>
           </div>
         </div>
@@ -104,15 +130,15 @@ export default function OperatorConsole() {
           <div className="space-y-0.5">
             {events.map((event) => (
               <button
-                key={event}
-                onClick={() => setSelectedEvent(event)}
+                key={event.id}
+                onClick={() => setSelectedEventId(event.id)}
                 className={`w-full text-left px-2 py-1.5 text-xs font-medium ${
-                  selectedEvent === event
+                  selectedEventId === event.id
                     ? "bg-blue-100 text-blue-900"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
-                {event}
+                {event.name}
               </button>
             ))}
           </div>
@@ -124,132 +150,209 @@ export default function OperatorConsole() {
         {selectedEvent ? (
           <div className="p-3">
             <div className="text-sm font-semibold text-gray-900 mb-3">
-              {selectedEvent}
+              {selectedEvent.name} ({selectedEvent.sport})
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs border-collapse">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="px-2 py-1.5 text-left font-semibold text-gray-700 border-b border-gray-300">
-                      Selection
-                    </th>
-                    <th className="px-2 py-1.5 text-right font-semibold text-gray-700 border-b border-gray-300">
-                      Odds
-                    </th>
-                    <th className="px-2 py-1.5 text-right font-semibold text-gray-700 border-b border-gray-300">
-                      Probability
-                    </th>
-                    <th className="px-2 py-1.5 text-right font-semibold text-gray-700 border-b border-gray-300">
-                      Status
-                    </th>
-                    <th className="px-2 py-1.5 text-right font-semibold text-gray-700 border-b border-gray-300">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedMarkets.map((market) => (
-                    <tr key={market.id} className="hover:bg-gray-50 border-b border-gray-200">
-                      <td className="px-2 py-1.5 text-gray-900">
-                        {market.selection}
-                      </td>
-                      <td className="px-2 py-1.5 text-right font-semibold text-gray-900">
-                        {market.odds.toFixed(2)}
-                      </td>
-                      <td className="px-2 py-1.5 text-right text-xs text-gray-600">
-                        {(market.impliedProbability * 100).toFixed(1)}%
-                      </td>
-                      <td className="px-2 py-1.5 text-right">
-                        <span
-                          className={`inline-block px-1.5 py-0.5 text-xs font-medium rounded ${
-                            market.status === "OPEN"
-                              ? "bg-green-100 text-green-800"
-                              : market.status === "CLOSED"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {market.status}
-                        </span>
-                      </td>
-                      <td className="px-2 py-1.5 text-right">
-                        <div className="flex gap-1 justify-end">
-                          {market.status === "OPEN" && (
-                            <button
-                              onClick={() => closeMarket(market.id)}
-                              className="px-2 py-0.5 bg-gray-600 text-white text-xs font-medium hover:bg-gray-700"
-                            >
-                              Close
-                            </button>
-                          )}
-                          {market.status === "CLOSED" && (
-                            <>
-                              {settlingMarketId === market.id ? (
-                                <div className="flex gap-1">
-                                  <button
-                                    onClick={() =>
-                                      setSettlementResult("WIN")
-                                    }
-                                    className={`px-2 py-0.5 text-xs font-medium ${
-                                      settlementResult === "WIN"
-                                        ? "bg-green-600 text-white"
-                                        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                                    }`}
-                                  >
-                                    WIN
-                                  </button>
-                                  <button
-                                    onClick={() =>
-                                      setSettlementResult("LOSE")
-                                    }
-                                    className={`px-2 py-0.5 text-xs font-medium ${
-                                      settlementResult === "LOSE"
-                                        ? "bg-red-600 text-white"
-                                        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                                    }`}
-                                  >
-                                    LOSE
-                                  </button>
-                                  {settlementResult && (
-                                    <button
-                                      onClick={() => handleSettle(market.id)}
-                                      className="px-2 py-0.5 bg-blue-600 text-white text-xs font-medium hover:bg-blue-700"
-                                    >
-                                      Confirm
-                                    </button>
-                                  )}
-                                  <button
-                                    onClick={() => {
-                                      setSettlingMarketId(null);
-                                      setSettlementResult(null);
-                                    }}
-                                    className="px-2 py-0.5 bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300"
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() => setSettlingMarketId(market.id)}
-                                  className="px-2 py-0.5 bg-blue-600 text-white text-xs font-medium hover:bg-blue-700"
-                                >
-                                  Settle
-                                </button>
-                              )}
-                            </>
-                          )}
-                          {market.status === "SETTLED" && (
-                            <span className="text-xs text-gray-600">
-                              {market.result}
-                            </span>
-                          )}
-                        </div>
-                      </td>
+
+            {/* Open Market Form */}
+            <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded">
+              <div className="text-xs font-semibold text-gray-700 uppercase mb-2">
+                Open Market
+              </div>
+              <div className="grid grid-cols-4 gap-2 mb-2">
+                <input
+                  type="number"
+                  value={homeOdds}
+                  onChange={(e) => setHomeOdds(e.target.value)}
+                  placeholder="Home odds"
+                  min="1"
+                  step="0.01"
+                  className="px-2 py-1 text-xs border border-gray-300 rounded text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+                <input
+                  type="number"
+                  value={drawOdds}
+                  onChange={(e) => setDrawOdds(e.target.value)}
+                  placeholder="Draw odds"
+                  min="1"
+                  step="0.01"
+                  className="px-2 py-1 text-xs border border-gray-300 rounded text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+                <input
+                  type="number"
+                  value={awayOdds}
+                  onChange={(e) => setAwayOdds(e.target.value)}
+                  placeholder="Away odds"
+                  min="1"
+                  step="0.01"
+                  className="px-2 py-1 text-xs border border-gray-300 rounded text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+                <input
+                  type="number"
+                  value={liquidity}
+                  onChange={(e) => setLiquidity(e.target.value)}
+                  placeholder="Liquidity"
+                  min="100"
+                  step="100"
+                  className="px-2 py-1 text-xs border border-gray-300 rounded text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <button
+                onClick={handleOpenMarket}
+                disabled={
+                  !selectedEventId ||
+                  !homeOdds ||
+                  !drawOdds ||
+                  !awayOdds ||
+                  parseFloat(homeOdds) <= 1 ||
+                  parseFloat(drawOdds) <= 1 ||
+                  parseFloat(awayOdds) <= 1
+                }
+                className={`px-3 py-1 text-xs font-medium ${
+                  selectedEventId &&
+                  homeOdds &&
+                  drawOdds &&
+                  awayOdds &&
+                  parseFloat(homeOdds) > 1 &&
+                  parseFloat(drawOdds) > 1 &&
+                  parseFloat(awayOdds) > 1
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
+              >
+                Open Market
+              </button>
+            </div>
+
+            {/* Markets Table */}
+            {selectedMarkets.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs border-collapse">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="px-2 py-1.5 text-left font-semibold text-gray-700 border-b border-gray-300">
+                        Market
+                      </th>
+                      <th className="px-2 py-1.5 text-right font-semibold text-gray-700 border-b border-gray-300">
+                        Status
+                      </th>
+                      <th className="px-2 py-1.5 text-right font-semibold text-gray-700 border-b border-gray-300">
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {selectedMarkets.map((market) => {
+                      const marketSelections = selections.filter(
+                        (s) => s.marketId === market.id
+                      );
+                      return (
+                        <>
+                          <tr
+                            key={market.id}
+                            className="hover:bg-gray-50 border-b border-gray-200"
+                          >
+                            <td className="px-2 py-1.5 text-gray-900">
+                              {market.type}
+                            </td>
+                            <td className="px-2 py-1.5 text-right">
+                              <span
+                                className={`inline-block px-1.5 py-0.5 text-xs font-medium rounded ${
+                                  market.status === "OPEN"
+                                    ? "bg-green-100 text-green-800"
+                                    : market.status === "CLOSED"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : "bg-gray-100 text-gray-800"
+                                }`}
+                              >
+                                {market.status}
+                              </span>
+                            </td>
+                            <td className="px-2 py-1.5 text-right">
+                              <div className="flex gap-1 justify-end">
+                                {market.status === "OPEN" && (
+                                  <button
+                                    onClick={() => closeMarket(market.id)}
+                                    className="px-2 py-0.5 bg-gray-600 text-white text-xs font-medium hover:bg-gray-700"
+                                  >
+                                    Close
+                                  </button>
+                                )}
+                                {market.status === "CLOSED" && (
+                                  <>
+                                    {settlingMarketId === market.id ? (
+                                      <div className="flex gap-1">
+                                        {marketSelections.map((sel) => (
+                                          <button
+                                            key={sel.id}
+                                            onClick={() =>
+                                              setWinningSelectionId(sel.id)
+                                            }
+                                            className={`px-2 py-0.5 text-xs font-medium ${
+                                              winningSelectionId === sel.id
+                                                ? "bg-green-600 text-white"
+                                                : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                            }`}
+                                          >
+                                            {sel.name}
+                                          </button>
+                                        ))}
+                                        {winningSelectionId && (
+                                          <button
+                                            onClick={() => handleSettle(market.id)}
+                                            className="px-2 py-0.5 bg-blue-600 text-white text-xs font-medium hover:bg-blue-700"
+                                          >
+                                            Confirm
+                                          </button>
+                                        )}
+                                        <button
+                                          onClick={() => {
+                                            setSettlingMarketId(null);
+                                            setWinningSelectionId(null);
+                                          }}
+                                          className="px-2 py-0.5 bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300"
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <button
+                                        onClick={() =>
+                                          setSettlingMarketId(market.id)
+                                        }
+                                        className="px-2 py-0.5 bg-blue-600 text-white text-xs font-medium hover:bg-blue-700"
+                                      >
+                                        Settle
+                                      </button>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                          {/* Selection rows */}
+                          {marketSelections.map((selection) => (
+                            <tr
+                              key={selection.id}
+                              className="bg-gray-50 border-b border-gray-200"
+                            >
+                              <td className="px-4 py-1.5 text-gray-600">
+                                {selection.name}
+                              </td>
+                              <td className="px-2 py-1.5 text-right text-xs text-gray-600">
+                                Back: {selection.backOdds.toFixed(2)} | Lay:{" "}
+                                {selection.layOdds.toFixed(2)} | Liq:{" "}
+                                {selection.liquidity}
+                              </td>
+                              <td></td>
+                            </tr>
+                          ))}
+                        </>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex items-center justify-center h-full text-gray-500 text-xs">

@@ -1,15 +1,17 @@
 "use client";
 
-import { Market } from "@/context/SimulatorContext";
+import { Market, Selection } from "@/context/SimulatorContext";
 
 interface MarketTableProps {
   markets: Market[];
-  onMarketClick: (market: Market, side: "BACK" | "LAY") => void;
+  selections: Selection[];
+  onSelectionClick: (selection: Selection, side: "BACK" | "LAY") => void;
 }
 
 export default function MarketTable({
   markets,
-  onMarketClick,
+  selections,
+  onSelectionClick,
 }: MarketTableProps) {
   const openMarkets = markets.filter((m) => m.status === "OPEN");
 
@@ -40,31 +42,46 @@ export default function MarketTable({
         </thead>
         <tbody>
           {openMarkets.map((market) => {
-            // Lay odds = back odds + small spread
-            const layOdds = market.odds + 0.05;
+            const marketSelections = selections.filter(
+              (s) => s.marketId === market.id
+            );
             return (
-              <tr key={market.id} className="hover:bg-gray-50 border-b border-gray-200">
-                <td className="px-2 py-1.5 text-gray-900">{market.selection}</td>
-                <td className="px-2 py-1.5 text-right">
-                  <button
-                    onClick={() => onMarketClick(market, "BACK")}
-                    className="w-full px-2 py-1 bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700"
+              <>
+                <tr key={market.id} className="bg-blue-50 border-b border-gray-200">
+                  <td colSpan={4} className="px-2 py-1 text-xs font-semibold text-gray-700">
+                    {market.type}
+                  </td>
+                </tr>
+                {marketSelections.map((selection) => (
+                  <tr
+                    key={selection.id}
+                    className="hover:bg-gray-50 border-b border-gray-200"
                   >
-                    {market.odds.toFixed(2)}
-                  </button>
-                </td>
-                <td className="px-2 py-1.5 text-right">
-                  <button
-                    onClick={() => onMarketClick(market, "LAY")}
-                    className="w-full px-2 py-1 bg-pink-600 text-white text-xs font-semibold hover:bg-pink-700"
-                  >
-                    {layOdds.toFixed(2)}
-                  </button>
-                </td>
-                <td className="px-2 py-1.5 text-right">
-                  <span className="text-xs text-gray-600">{market.status}</span>
-                </td>
-              </tr>
+                    <td className="px-2 py-1.5 text-gray-900">
+                      {selection.name}
+                    </td>
+                    <td className="px-2 py-1.5 text-right">
+                      <button
+                        onClick={() => onSelectionClick(selection, "BACK")}
+                        className="w-full px-2 py-1 bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700"
+                      >
+                        {selection.backOdds.toFixed(2)}
+                      </button>
+                    </td>
+                    <td className="px-2 py-1.5 text-right">
+                      <button
+                        onClick={() => onSelectionClick(selection, "LAY")}
+                        className="w-full px-2 py-1 bg-pink-600 text-white text-xs font-semibold hover:bg-pink-700"
+                      >
+                        {selection.layOdds.toFixed(2)}
+                      </button>
+                    </td>
+                    <td className="px-2 py-1.5 text-right">
+                      <span className="text-xs text-gray-600">{market.status}</span>
+                    </td>
+                  </tr>
+                ))}
+              </>
             );
           })}
         </tbody>

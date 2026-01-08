@@ -3,15 +3,21 @@
 import { useSimulator } from "@/context/SimulatorContext";
 
 export default function PositionsTable() {
-  const { positions, markets, trades } = useSimulator();
+  const { positions, markets, selections, trades, events } = useSimulator();
 
   const positionsWithDetails = positions.map((position) => {
+    const selection = selections.find((s) => s.id === position.selectionId);
     const market = markets.find((m) => m.id === position.marketId);
-    const marketTrades = trades.filter((t) => t.marketId === position.marketId);
+    const event = market ? events.find((e) => e.id === market.eventId) : null;
+    const selectionTrades = trades.filter(
+      (t) => t.selectionId === position.selectionId
+    );
     return {
       ...position,
+      selection,
       market,
-      trades: marketTrades,
+      event,
+      trades: selectionTrades,
     };
   });
 
@@ -55,12 +61,15 @@ export default function PositionsTable() {
                 : 0;
 
             return (
-              <tr key={position.marketId} className="hover:bg-gray-50 border-b border-gray-200">
+              <tr
+                key={position.selectionId}
+                className="hover:bg-gray-50 border-b border-gray-200"
+              >
                 <td className="px-2 py-1.5 text-gray-900">
-                  {position.market?.eventName || "Unknown"}
+                  {position.event?.name || "Unknown"}
                 </td>
                 <td className="px-2 py-1.5 text-gray-600">
-                  {position.market?.selection || "-"}
+                  {position.selection?.name || "-"}
                 </td>
                 <td className="px-2 py-1.5 text-right font-semibold text-gray-900">
                   £{position.totalStake.toFixed(2)}

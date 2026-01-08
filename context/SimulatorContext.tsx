@@ -9,24 +9,36 @@ import {
 } from "react";
 
 export type MarketStatus = "OPEN" | "CLOSED" | "SETTLED";
-export type MarketResult = "WIN" | "LOSE" | null;
 export type TradeSide = "BACK";
 export type TradeStatus = "OPEN" | "SETTLED";
+export type SelectionName = "HOME" | "DRAW" | "AWAY";
+
+export interface Event {
+  id: string;
+  name: string;
+  sport: string;
+}
 
 export interface Market {
   id: string;
-  eventName: string;
-  marketType: "MATCH_WINNER";
-  selection: "HOME";
-  odds: number;
+  eventId: string;
+  type: "MATCH_ODDS";
   status: MarketStatus;
-  result: MarketResult;
+}
+
+export interface Selection {
+  id: string;
+  marketId: string;
+  name: SelectionName;
+  backOdds: number;
+  layOdds: number;
   liquidity: number;
   impliedProbability: number;
 }
 
 export interface Trade {
   id: string;
+  selectionId: string;
   marketId: string;
   side: TradeSide;
   stake: number;
@@ -36,6 +48,7 @@ export interface Trade {
 }
 
 export interface Position {
+  selectionId: string;
   marketId: string;
   totalStake: number;
   potentialPayout: number;
@@ -45,22 +58,31 @@ export interface Position {
 export interface SettlementHistory {
   id: string;
   marketId: string;
-  result: MarketResult;
+  winningSelectionId: string;
   settledAt: Date;
 }
 
 interface SimulatorContextType {
+  events: Event[];
   markets: Market[];
+  selections: Selection[];
   trades: Trade[];
   positions: Position[];
   wallet: {
     balance: number;
   };
   settlementHistory: SettlementHistory[];
-  createMarket: (eventName: string, odds: number, liquidity?: number) => void;
+  createEvent: (name: string, sport: string) => string;
+  openMarket: (
+    eventId: string,
+    homeOdds: number,
+    drawOdds: number,
+    awayOdds: number,
+    liquidity?: number
+  ) => void;
   closeMarket: (marketId: string) => void;
-  placeTrade: (marketId: string, stake: number) => void;
-  settleMarket: (marketId: string, result: MarketResult) => void;
+  placeTrade: (selectionId: string, stake: number) => void;
+  settleMarket: (marketId: string, winningSelectionId: string) => void;
 }
 
 const SimulatorContext = createContext<SimulatorContextType | undefined>(
@@ -68,28 +90,62 @@ const SimulatorContext = createContext<SimulatorContextType | undefined>(
 );
 
 export function SimulatorProvider({ children }: { children: ReactNode }) {
+  const [events, setEvents] = useState<Event[]>([]);
   const [markets, setMarkets] = useState<Market[]>([]);
+  const [selections, setSelections] = useState<Selection[]>([]);
   const [trades, setTrades] = useState<Trade[]>([]);
   const [wallet, setWallet] = useState({ balance: 1000 });
   const [settlementHistory, setSettlementHistory] = useState<
     SettlementHistory[]
   >([]);
 
-  const createMarket = useCallback(
-    (eventName: string, odds: number, liquidity: number = 1000) => {
-      const impliedProbability = 1 / odds;
+  const createEvent = useCallback((name: string, sport: string): string => {
+    const eventId = `event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const newEvent: Event = {
+      id: eventId,
+      name,
+      sport,
+    };
+    setEvents((prev) => [...prev, newEvent]);
+    return eventId;
+  }, []);
+
+  const openMarket = useCallback(
+    (
+      eventId: string,
+      homeOdds: number,
+      drawOdds: number,
+      awayOdds: number,
+      liquidity: number = 1000
+    ) => {
+      const marketId = `market-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       const newMarket: Market = {
-        id: `market-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        eventName,
-        marketType: "MATCH_WINNER",
-        selection: "HOME",
-        odds,
+        id: marketId,
+        eventId,
+        type: "MATCH_ODDS",
         status: "OPEN",
-        result: null,
-        liquidity,
-        impliedProbability,
       };
+
+      // Create three selections
+      const selectionNames: SelectionName[] = ["HOME", "DRAW", "AWAY"];
+      const oddsArray = [homeOdds, drawOdds, awayOdds];
+      const newSelections: Selection[] = selectionNames.map((name, index) => {
+        const backOdds = oddsArray[index];
+        const layOdds = backOdds + 0.05; // Small spread
+        const impliedProbability = 1 / backOdds;
+        return {
+          id: `selection-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+          marketId,
+          name,
+          backOdds,
+          layOdds,
+          liquidity,
+          impliedProbability,
+        };
+      });
+
       setMarkets((prev) => [...prev, newMarket]);
+      setSelections((prev) => [...prev, ...newSelections]);
     },
     []
   );
@@ -103,69 +159,68 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const placeTrade = useCallback(
-    (marketId: string, stake: number) => {
-      setMarkets((prevMarkets) => {
-        const market = prevMarkets.find((m) => m.id === marketId);
-        if (!market) {
-          return prevMarkets;
+    (selectionId: string, stake: number) => {
+      setSelections((prevSelections) => {
+        const selection = prevSelections.find((s) => s.id === selectionId);
+        if (!selection) {
+          return prevSelections;
         }
 
-        if (market.status !== "OPEN") {
-          return prevMarkets;
+        const market = markets.find((m) => m.id === selection.marketId);
+        if (!market || market.status !== "OPEN") {
+          return prevSelections;
         }
 
         if (wallet.balance < stake || stake <= 0) {
-          return prevMarkets;
+          return prevSelections;
         }
 
         // Calculate odds at time of trade (before price movement)
-        const oddsAtTrade = market.odds;
+        const oddsAtTrade = selection.backOdds;
         const potentialPayout = stake * oddsAtTrade;
 
-        // Update market probability and odds (price movement simulation)
-        // Only move price if market is OPEN (frozen when CLOSED or SETTLED)
-        if (market.status === "OPEN") {
-          const delta = stake / market.liquidity;
-          const newProbability = Math.min(0.95, market.impliedProbability + delta);
-          const newOdds = 1 / newProbability;
+        // Update selection probability and odds (price movement simulation)
+        const delta = stake / selection.liquidity;
+        const newProbability = Math.min(0.95, selection.impliedProbability + delta);
+        const newBackOdds = 1 / newProbability;
+        const newLayOdds = newBackOdds + 0.05;
 
-          // Update market with new odds and probability
-          const updatedMarkets = prevMarkets.map((m) =>
-            m.id === marketId
-              ? {
-                  ...m,
-                  impliedProbability: newProbability,
-                  odds: newOdds,
-                }
-              : m
-          );
+        // Update selection with new odds
+        const updatedSelections = prevSelections.map((s) =>
+          s.id === selectionId
+            ? {
+                ...s,
+                impliedProbability: newProbability,
+                backOdds: newBackOdds,
+                layOdds: newLayOdds,
+              }
+            : s
+        );
 
-          // Create trade with odds at time of placement
-          const newTrade: Trade = {
-            id: `trade-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            marketId,
-            side: "BACK",
-            stake,
-            odds: oddsAtTrade,
-            potentialPayout,
-            status: "OPEN",
-          };
+        // Create trade with odds at time of placement
+        const newTrade: Trade = {
+          id: `trade-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          selectionId,
+          marketId: selection.marketId,
+          side: "BACK",
+          stake,
+          odds: oddsAtTrade,
+          potentialPayout,
+          status: "OPEN",
+        };
 
-          setTrades((prev) => [...prev, newTrade]);
-          setWallet((prev) => ({ balance: prev.balance - stake }));
+        setTrades((prev) => [...prev, newTrade]);
+        setWallet((prev) => ({ balance: prev.balance - stake }));
 
-          return updatedMarkets;
-        }
-
-        return prevMarkets;
+        return updatedSelections;
       });
       return true;
     },
-    [wallet.balance]
+    [markets, wallet.balance]
   );
 
   const settleMarket = useCallback(
-    (marketId: string, result: MarketResult) => {
+    (marketId: string, winningSelectionId: string) => {
       setMarkets((prevMarkets) => {
         const market = prevMarkets.find((m) => m.id === marketId);
         if (!market) {
@@ -179,9 +234,7 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
 
         // Update market
         const updatedMarkets = prevMarkets.map((m) =>
-          m.id === marketId
-            ? { ...m, status: "SETTLED" as MarketStatus, result }
-            : m
+          m.id === marketId ? { ...m, status: "SETTLED" as MarketStatus } : m
         );
 
         // Settle trades and calculate payout
@@ -190,12 +243,12 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
           let totalPayout = 0;
 
           marketTrades.forEach((trade) => {
-            if (result === "WIN") {
+            if (trade.selectionId === winningSelectionId) {
               totalPayout += trade.potentialPayout;
             }
           });
 
-          if (result === "WIN") {
+          if (totalPayout > 0) {
             setWallet((prevWallet) => ({
               balance: prevWallet.balance + totalPayout,
             }));
@@ -212,7 +265,7 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
           {
             id: `settlement-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             marketId,
-            result,
+            winningSelectionId,
             settledAt: new Date(),
           },
         ]);
@@ -224,30 +277,39 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
   );
 
   // Calculate positions from trades
-  const positions: Position[] = markets.map((market) => {
-    const marketTrades = trades.filter((t) => t.marketId === market.id);
-    const totalStake = marketTrades.reduce((sum, t) => sum + t.stake, 0);
-    const potentialPayout = marketTrades.reduce(
-      (sum, t) => sum + t.potentialPayout,
-      0
-    );
-    return {
-      marketId: market.id,
-      totalStake,
-      potentialPayout,
-      status: market.status,
-    };
-  }).filter((p) => p.totalStake > 0);
+  const positions: Position[] = selections
+    .map((selection) => {
+      const selectionTrades = trades.filter(
+        (t) => t.selectionId === selection.id
+      );
+      const totalStake = selectionTrades.reduce((sum, t) => sum + t.stake, 0);
+      const potentialPayout = selectionTrades.reduce(
+        (sum, t) => sum + t.potentialPayout,
+        0
+      );
+      const market = markets.find((m) => m.id === selection.marketId);
+      return {
+        selectionId: selection.id,
+        marketId: selection.marketId,
+        totalStake,
+        potentialPayout,
+        status: market?.status || "OPEN",
+      };
+    })
+    .filter((p) => p.totalStake > 0);
 
   return (
     <SimulatorContext.Provider
       value={{
+        events,
         markets,
+        selections,
         trades,
         positions,
         wallet,
         settlementHistory,
-        createMarket,
+        createEvent,
+        openMarket,
         closeMarket,
         placeTrade,
         settleMarket,

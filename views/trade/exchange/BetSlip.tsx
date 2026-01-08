@@ -10,23 +10,30 @@ interface BetSlipProps {
 }
 
 export default function BetSlip({ selection, onBetPlaced }: BetSlipProps) {
-  const { wallet, placeTrade, markets } = useSimulator();
+  const { wallet, placeTrade, selections, markets } = useSimulator();
   const [stake, setStake] = useState<string>("");
   const [oddsMoved, setOddsMoved] = useState(false);
   const [originalOdds, setOriginalOdds] = useState<number | null>(null);
 
   const stakeNum = parseFloat(stake) || 0;
+  const market = selection
+    ? markets.find((m) => m.id === selection.marketId)
+    : null;
   const isValid =
     selection &&
-    selection.market.status === "OPEN" &&
+    market?.status === "OPEN" &&
     stakeNum > 0 &&
     stakeNum <= wallet.balance;
 
-  // Get current market odds (may have moved)
-  const currentMarket = selection
-    ? markets.find((m) => m.id === selection.market.id)
+  // Get current selection odds (may have moved)
+  const currentSelection = selection
+    ? selections.find((s) => s.id === selection.selection.id)
     : null;
-  const currentOdds = currentMarket?.odds || selection?.odds || 0;
+  const currentOdds = currentSelection
+    ? selection?.side === "BACK"
+      ? currentSelection.backOdds
+      : currentSelection.layOdds
+    : selection?.odds || 0;
 
   // Track odds changes
   useEffect(() => {
@@ -34,7 +41,7 @@ export default function BetSlip({ selection, onBetPlaced }: BetSlipProps) {
       setOriginalOdds(selection.odds);
       setOddsMoved(false);
     }
-  }, [selection?.market.id]);
+  }, [selection?.selection.id]);
 
   useEffect(() => {
     if (selection && originalOdds && currentOdds && currentOdds !== originalOdds) {
@@ -42,9 +49,6 @@ export default function BetSlip({ selection, onBetPlaced }: BetSlipProps) {
     }
   }, [currentOdds, originalOdds, selection]);
 
-  // For LAY bets, we simulate by using the lay odds but still calling placeTrade
-  // In a real exchange, LAY would be different, but we're keeping simulator logic
-  // Use current odds for profit calculation
   const potentialProfit =
     selection && stakeNum > 0
       ? selection.side === "BACK"
@@ -56,7 +60,7 @@ export default function BetSlip({ selection, onBetPlaced }: BetSlipProps) {
     if (isValid && selection) {
       // For MVP, we only support BACK bets in the simulator
       // LAY bets would require different logic, but we'll use placeTrade for now
-      placeTrade(selection.market.id, stakeNum);
+      placeTrade(selection.selection.id, stakeNum);
       setStake("");
       setOddsMoved(false);
       setOriginalOdds(null);
@@ -76,14 +80,21 @@ export default function BetSlip({ selection, onBetPlaced }: BetSlipProps) {
             <div>
               <div className="text-xs text-gray-600 mb-1">Event</div>
               <div className="text-xs font-medium text-gray-900">
-                {selection.market.eventName}
+                {selection.eventName}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-xs text-gray-600 mb-1">Market</div>
+              <div className="text-xs font-medium text-gray-900">
+                Match Odds
               </div>
             </div>
 
             <div>
               <div className="text-xs text-gray-600 mb-1">Selection</div>
               <div className="text-xs font-medium text-gray-900">
-                {selection.market.selection}
+                {selection.selection.name}
               </div>
             </div>
 
@@ -129,7 +140,7 @@ export default function BetSlip({ selection, onBetPlaced }: BetSlipProps) {
                 min="0"
                 step="0.01"
                 max={wallet.balance}
-                disabled={selection.market.status !== "OPEN"}
+                disabled={market?.status !== "OPEN"}
                 className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
               <div className="text-xs text-gray-500 mt-0.5">
@@ -151,10 +162,10 @@ export default function BetSlip({ selection, onBetPlaced }: BetSlipProps) {
               </div>
             )}
 
-            {selection.market.status !== "OPEN" && (
+            {market && market.status !== "OPEN" && (
               <div className="bg-yellow-50 border border-yellow-200 rounded p-2">
                 <p className="text-xs text-yellow-800">
-                  Market is {selection.market.status.toLowerCase()}
+                  Market is {market.status.toLowerCase()}
                 </p>
               </div>
             )}
