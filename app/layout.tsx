@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ModeProvider } from "@/context/ModeContext";
 import { ViewProvider } from "@/context/ViewContext";
+import { SimulatorProvider } from "@/context/SimulatorContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,7 +31,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ModeProvider>
-          <ViewProvider>{children}</ViewProvider>
+          <ViewProvider>
+            <SimulatorProvider>{children}</SimulatorProvider>
+          </ViewProvider>
         </ModeProvider>
       </body>
     </html>
