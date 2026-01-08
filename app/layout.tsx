@@ -4,6 +4,7 @@ import "./globals.css";
 import { ModeProvider } from "@/context/ModeContext";
 import { ViewProvider } from "@/context/ViewContext";
 import { SimulatorProvider } from "@/context/SimulatorContext";
+import { AdminSettingsProvider } from "@/context/AdminSettingsContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +33,9 @@ export default function RootLayout({
       >
         <ModeProvider>
           <ViewProvider>
-            <SimulatorProvider>{children}</SimulatorProvider>
+            <SimulatorProvider>
+              <AdminSettingsProvider>{children}</AdminSettingsProvider>
+            </SimulatorProvider>
           </ViewProvider>
         </ModeProvider>
       </body>

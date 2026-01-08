@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSimulator, MarketResult } from "@/context/SimulatorContext";
 
 export default function AdminSettlement() {
-  const { markets, settleMarket } = useSimulator();
+  const { markets, settleMarket, settlementHistory } = useSimulator();
   const [selectedMarketId, setSelectedMarketId] = useState<string | null>(null);
   const [selectedResult, setSelectedResult] = useState<MarketResult>(null);
 
@@ -13,9 +13,12 @@ export default function AdminSettlement() {
 
   const handleSettle = () => {
     if (selectedMarketId && selectedResult) {
-      settleMarket(selectedMarketId, selectedResult);
-      setSelectedMarketId(null);
-      setSelectedResult(null);
+      const market = markets.find((m) => m.id === selectedMarketId);
+      if (market && market.status === "CLOSED") {
+        settleMarket(selectedMarketId, selectedResult);
+        setSelectedMarketId(null);
+        setSelectedResult(null);
+      }
     }
   };
 
@@ -186,6 +189,64 @@ export default function AdminSettlement() {
                       </td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Settlement History
+          </h3>
+          {settlementHistory.length === 0 ? (
+            <p className="text-gray-500 text-sm">No settlement history</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-semibold text-gray-700">
+                      Event
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-gray-700">
+                      Result
+                    </th>
+                    <th className="px-4 py-3 text-right font-semibold text-gray-700">
+                      Settled At
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {settlementHistory
+                    .slice()
+                    .reverse()
+                    .map((settlement) => {
+                      const market = markets.find(
+                        (m) => m.id === settlement.marketId
+                      );
+                      return (
+                        <tr key={settlement.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-gray-900">
+                            {market?.eventName || "Unknown Market"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`inline-block px-2 py-1 text-xs font-medium rounded ${
+                                settlement.result === "WIN"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
+                              {settlement.result}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right text-gray-600">
+                            {new Date(settlement.settledAt).toLocaleString()}
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>

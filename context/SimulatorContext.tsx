@@ -97,12 +97,16 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
   const placeTrade = useCallback(
     (marketId: string, stake: number) => {
       const market = markets.find((m) => m.id === marketId);
-      if (!market || market.status !== "OPEN") {
-        return;
+      if (!market) {
+        return false;
       }
 
-      if (wallet.balance < stake) {
-        return;
+      if (market.status !== "OPEN") {
+        return false;
+      }
+
+      if (wallet.balance < stake || stake <= 0) {
+        return false;
       }
 
       const potentialPayout = stake * market.odds;
@@ -118,6 +122,7 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
 
       setTrades((prev) => [...prev, newTrade]);
       setWallet((prev) => ({ balance: prev.balance - stake }));
+      return true;
     },
     [markets, wallet.balance]
   );
@@ -126,7 +131,12 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
     (marketId: string, result: MarketResult) => {
       setMarkets((prevMarkets) => {
         const market = prevMarkets.find((m) => m.id === marketId);
-        if (!market || market.status === "SETTLED") {
+        if (!market) {
+          return prevMarkets;
+        }
+
+        // Only allow settling CLOSED markets
+        if (market.status !== "CLOSED") {
           return prevMarkets;
         }
 

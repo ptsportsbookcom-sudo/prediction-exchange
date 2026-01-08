@@ -3,30 +3,11 @@
 import Topbar from "./Topbar";
 import Sidebar from "./Sidebar";
 import { useView } from "@/context/ViewContext";
-import TradeView from "@/views/trade/TradeView";
+import PredictionEmbedView from "@/views/trade/PredictionEmbedView";
+import BetfairEmbedView from "@/views/trade/BetfairEmbedView";
 import AdminMarketControl from "@/views/admin/AdminMarketControl";
 import AdminSettlement from "@/views/admin/AdminSettlement";
-
-// Placeholder view components
-function Betfair() {
-  return (
-    <div className="p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">Betfair</h2>
-      <p className="text-gray-600">Betfair view placeholder</p>
-    </div>
-  );
-}
-
-function IframeControl() {
-  return (
-    <div className="p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
-        Iframe Control
-      </h2>
-      <p className="text-gray-600">Iframe Control view placeholder</p>
-    </div>
-  );
-}
+import AdminIframeControl from "@/views/admin/AdminIframeControl";
 
 export default function AppShell() {
   const { view } = useView();
@@ -34,17 +15,17 @@ export default function AppShell() {
   const renderView = () => {
     switch (view) {
       case "prediction-markets":
-        return <TradeView />;
+        return <PredictionEmbedView />;
       case "betfair":
-        return <Betfair />;
+        return <BetfairEmbedView />;
       case "market-control":
         return <AdminMarketControl />;
       case "settlement":
         return <AdminSettlement />;
       case "iframe-control":
-        return <IframeControl />;
+        return <AdminIframeControl />;
       default:
-        return <TradeView />;
+        return <PredictionEmbedView />;
     }
   };
 

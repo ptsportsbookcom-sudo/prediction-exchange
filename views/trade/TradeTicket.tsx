@@ -19,7 +19,8 @@ export default function TradeTicket({
   const [stake, setStake] = useState<string>("");
   const stakeNum = parseFloat(stake) || 0;
   const potentialPayout = stakeNum * market.odds;
-  const isValid = stakeNum > 0 && stakeNum <= wallet.balance;
+  const isMarketOpen = market.status === "OPEN";
+  const isValid = isMarketOpen && stakeNum > 0 && stakeNum <= wallet.balance;
 
   const handleConfirm = () => {
     if (isValid) {
@@ -59,6 +60,14 @@ export default function TradeTicket({
             </div>
           </div>
 
+          {!isMarketOpen && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+              <p className="text-sm text-yellow-800">
+                This market is {market.status.toLowerCase()}. Trading is no longer available.
+              </p>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Stake
@@ -71,7 +80,8 @@ export default function TradeTicket({
               min="0"
               step="0.01"
               max={wallet.balance}
-              className="w-full px-3 py-2 border border-gray-300 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={!isMarketOpen}
+              className="w-full px-3 py-2 border border-gray-300 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
             <div className="text-xs text-gray-500 mt-1">
               Available: £{wallet.balance.toFixed(2)}
