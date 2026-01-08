@@ -21,6 +21,8 @@ export interface Market {
   odds: number;
   status: MarketStatus;
   result: MarketResult;
+  liquidity: number;
+  impliedProbability: number;
 }
 
 export interface Trade {
@@ -55,7 +57,7 @@ interface SimulatorContextType {
     balance: number;
   };
   settlementHistory: SettlementHistory[];
-  createMarket: (eventName: string, odds: number) => void;
+  createMarket: (eventName: string, odds: number, liquidity?: number) => void;
   closeMarket: (marketId: string) => void;
   placeTrade: (marketId: string, stake: number) => void;
   settleMarket: (marketId: string, result: MarketResult) => void;
@@ -73,18 +75,24 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
     SettlementHistory[]
   >([]);
 
-  const createMarket = useCallback((eventName: string, odds: number) => {
-    const newMarket: Market = {
-      id: `market-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      eventName,
-      marketType: "MATCH_WINNER",
-      selection: "HOME",
-      odds,
-      status: "OPEN",
-      result: null,
-    };
-    setMarkets((prev) => [...prev, newMarket]);
-  }, []);
+  const createMarket = useCallback(
+    (eventName: string, odds: number, liquidity: number = 1000) => {
+      const impliedProbability = 1 / odds;
+      const newMarket: Market = {
+        id: `market-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        eventName,
+        marketType: "MATCH_WINNER",
+        selection: "HOME",
+        odds,
+        status: "OPEN",
+        result: null,
+        liquidity,
+        impliedProbability,
+      };
+      setMarkets((prev) => [...prev, newMarket]);
+    },
+    []
+  );
 
   const closeMarket = useCallback((marketId: string) => {
     setMarkets((prev) =>
@@ -96,35 +104,64 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
 
   const placeTrade = useCallback(
     (marketId: string, stake: number) => {
-      const market = markets.find((m) => m.id === marketId);
-      if (!market) {
-        return false;
-      }
+      setMarkets((prevMarkets) => {
+        const market = prevMarkets.find((m) => m.id === marketId);
+        if (!market) {
+          return prevMarkets;
+        }
 
-      if (market.status !== "OPEN") {
-        return false;
-      }
+        if (market.status !== "OPEN") {
+          return prevMarkets;
+        }
 
-      if (wallet.balance < stake || stake <= 0) {
-        return false;
-      }
+        if (wallet.balance < stake || stake <= 0) {
+          return prevMarkets;
+        }
 
-      const potentialPayout = stake * market.odds;
-      const newTrade: Trade = {
-        id: `trade-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        marketId,
-        side: "BACK",
-        stake,
-        odds: market.odds,
-        potentialPayout,
-        status: "OPEN",
-      };
+        // Calculate odds at time of trade (before price movement)
+        const oddsAtTrade = market.odds;
+        const potentialPayout = stake * oddsAtTrade;
 
-      setTrades((prev) => [...prev, newTrade]);
-      setWallet((prev) => ({ balance: prev.balance - stake }));
+        // Update market probability and odds (price movement simulation)
+        // Only move price if market is OPEN (frozen when CLOSED or SETTLED)
+        if (market.status === "OPEN") {
+          const delta = stake / market.liquidity;
+          const newProbability = Math.min(0.95, market.impliedProbability + delta);
+          const newOdds = 1 / newProbability;
+
+          // Update market with new odds and probability
+          const updatedMarkets = prevMarkets.map((m) =>
+            m.id === marketId
+              ? {
+                  ...m,
+                  impliedProbability: newProbability,
+                  odds: newOdds,
+                }
+              : m
+          );
+
+          // Create trade with odds at time of placement
+          const newTrade: Trade = {
+            id: `trade-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            marketId,
+            side: "BACK",
+            stake,
+            odds: oddsAtTrade,
+            potentialPayout,
+            status: "OPEN",
+          };
+
+          setTrades((prev) => [...prev, newTrade]);
+          setWallet((prev) => ({ balance: prev.balance - stake }));
+
+          return updatedMarkets;
+        }
+
+        return prevMarkets;
+      });
       return true;
     },
-    [markets, wallet.balance]
+    [wallet.balance]
   );
 
   const settleMarket = useCallback(
