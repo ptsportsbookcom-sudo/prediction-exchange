@@ -6,6 +6,8 @@ import { useView } from "@/context/ViewContext";
 import PredictionEmbedView from "@/views/trade/PredictionEmbedView";
 import BetfairEmbedView from "@/views/trade/BetfairEmbedView";
 import ExchangeView from "@/views/trade/ExchangeView";
+import WalletView from "@/views/trade/WalletView";
+import MyBetsView from "@/views/trade/MyBetsView";
 import OperatorConsole from "@/views/admin/OperatorConsole";
 import AdminSettlement from "@/views/admin/AdminSettlement";
 import AdminIframeControl from "@/views/admin/AdminIframeControl";
@@ -17,6 +19,10 @@ export default function AppShell() {
     switch (view) {
       case "prediction-markets":
         return <ExchangeView />;
+      case "my-bets":
+        return <MyBetsView />;
+      case "wallet":
+        return <WalletView />;
       case "betfair":
         return <BetfairEmbedView />;
       case "market-control":

@@ -8,8 +8,10 @@ export default function Sidebar() {
   const { view, setView } = useView();
 
   const tradeItems: { id: TradeView; label: string }[] = [
-    { id: "prediction-markets", label: "Prediction Markets" },
-    { id: "betfair", label: "Betfair" },
+    { id: "prediction-markets", label: "Exchange" },
+    { id: "my-bets", label: "My Bets" },
+    { id: "wallet", label: "Wallet" },
+    { id: "betfair", label: "Betfair (External)" },
   ];
 
   const adminItems: { id: AdminView; label: string }[] = [

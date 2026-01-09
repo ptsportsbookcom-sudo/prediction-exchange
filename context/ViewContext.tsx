@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useMode } from "./ModeContext";
 
-export type TradeView = "prediction-markets" | "betfair";
+export type TradeView = "prediction-markets" | "my-bets" | "wallet" | "betfair";
 export type AdminView = "market-control" | "settlement" | "iframe-control";
 export type View = TradeView | AdminView;
 
