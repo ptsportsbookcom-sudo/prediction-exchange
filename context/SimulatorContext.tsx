@@ -83,6 +83,10 @@ interface SimulatorContextType {
   closeMarket: (marketId: string) => void;
   placeTrade: (selectionId: string, stake: number) => void;
   settleMarket: (marketId: string, winningSelectionId: string) => void;
+  updateSelection: (
+    selectionId: string,
+    updates: Partial<Pick<Selection, "backOdds" | "layOdds" | "liquidity">>
+  ) => void;
 }
 
 const SimulatorContext = createContext<SimulatorContextType | undefined>(
@@ -171,7 +175,13 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
           return prevSelections;
         }
 
-        if (wallet.balance < stake || stake <= 0) {
+        // Enforce wallet balance and liquidity
+        if (
+          wallet.balance < stake ||
+          stake <= 0 ||
+          selection.liquidity <= 0 ||
+          stake > selection.liquidity
+        ) {
           return prevSelections;
         }
 
@@ -180,12 +190,15 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
         const potentialPayout = stake * oddsAtTrade;
 
         // Update selection probability and odds (price movement simulation)
-        const delta = stake / selection.liquidity;
+        const baseLiquidity = selection.liquidity;
+        const delta =
+          baseLiquidity > 0 ? stake / baseLiquidity : 0;
         const newProbability = Math.min(0.95, selection.impliedProbability + delta);
         const newBackOdds = 1 / newProbability;
         const newLayOdds = newBackOdds + 0.05;
+        const newLiquidity = Math.max(0, baseLiquidity - stake);
 
-        // Update selection with new odds
+        // Update selection with new odds and reduced liquidity
         const updatedSelections = prevSelections.map((s) =>
           s.id === selectionId
             ? {
@@ -193,6 +206,7 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
                 impliedProbability: newProbability,
                 backOdds: newBackOdds,
                 layOdds: newLayOdds,
+                liquidity: newLiquidity,
               }
             : s
         );
@@ -276,6 +290,45 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const updateSelection = useCallback(
+    (
+      selectionId: string,
+      updates: Partial<Pick<Selection, "backOdds" | "layOdds" | "liquidity">>
+    ) => {
+      setSelections((prevSelections) =>
+        prevSelections.map((selection) => {
+          if (selection.id !== selectionId) return selection;
+
+          let backOdds = updates.backOdds ?? selection.backOdds;
+          let layOdds = updates.layOdds ?? selection.layOdds;
+          let liquidity = updates.liquidity ?? selection.liquidity;
+
+          // Enforce simple constraints
+          if (backOdds <= 1.01) {
+            backOdds = 1.02;
+          }
+          if (layOdds <= 1.01) {
+            layOdds = 1.02;
+          }
+          if (liquidity < 0) {
+            liquidity = 0;
+          }
+
+          const impliedProbability = 1 / backOdds;
+
+          return {
+            ...selection,
+            backOdds,
+            layOdds,
+            liquidity,
+            impliedProbability,
+          };
+        })
+      );
+    },
+    []
+  );
+
   // Calculate positions from trades
   const positions: Position[] = selections
     .map((selection) => {
@@ -313,6 +366,7 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
         closeMarket,
         placeTrade,
         settleMarket,
+        updateSelection,
       }}
     >
       {children}

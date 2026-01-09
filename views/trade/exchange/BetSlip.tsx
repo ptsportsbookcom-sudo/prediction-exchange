@@ -19,11 +19,6 @@ export default function BetSlip({ selection, onBetPlaced }: BetSlipProps) {
   const market = selection
     ? markets.find((m) => m.id === selection.marketId)
     : null;
-  const isValid =
-    selection &&
-    market?.status === "OPEN" &&
-    stakeNum > 0 &&
-    stakeNum <= wallet.balance;
 
   // Get current selection odds (may have moved)
   const currentSelection = selection
@@ -34,6 +29,23 @@ export default function BetSlip({ selection, onBetPlaced }: BetSlipProps) {
       ? currentSelection.backOdds
       : currentSelection.layOdds
     : selection?.odds || 0;
+
+  const availableLiquidity =
+    currentSelection && market?.status === "OPEN"
+      ? currentSelection.liquidity
+      : 0;
+
+  const maxStake = Math.min(wallet.balance, availableLiquidity || 0);
+
+  const insufficientLiquidity =
+    stakeNum > 0 && availableLiquidity > 0 && stakeNum > availableLiquidity;
+
+  const isValid =
+    selection &&
+    market?.status === "OPEN" &&
+    stakeNum > 0 &&
+    stakeNum <= wallet.balance &&
+    stakeNum <= availableLiquidity;
 
   // Track odds changes
   useEffect(() => {
@@ -139,13 +151,23 @@ export default function BetSlip({ selection, onBetPlaced }: BetSlipProps) {
                 placeholder="0.00"
                 min="0"
                 step="0.01"
-                max={wallet.balance}
+                max={maxStake || wallet.balance}
                 disabled={market?.status !== "OPEN"}
                 className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
               <div className="text-xs text-gray-500 mt-0.5">
-                Available: £{wallet.balance.toFixed(2)}
+                Balance: £{wallet.balance.toFixed(2)}{" "}
+                {availableLiquidity > 0 && (
+                  <>
+                    | Liquidity: £{availableLiquidity.toFixed(2)}
+                  </>
+                )}
               </div>
+              {insufficientLiquidity && (
+                <div className="text-xs text-red-600 mt-0.5">
+                  Insufficient liquidity at this price
+                </div>
+              )}
             </div>
 
             {stakeNum > 0 && (

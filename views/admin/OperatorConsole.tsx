@@ -12,6 +12,7 @@ export default function OperatorConsole() {
     openMarket,
     closeMarket,
     settleMarket,
+    updateSelection,
   } = useSimulator();
 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -23,6 +24,9 @@ export default function OperatorConsole() {
   const [liquidity, setLiquidity] = useState<string>("1000");
   const [settlingMarketId, setSettlingMarketId] = useState<string | null>(null);
   const [winningSelectionId, setWinningSelectionId] = useState<string | null>(
+    null
+  );
+  const [editedSelectionId, setEditedSelectionId] = useState<string | null>(
     null
   );
 
@@ -333,15 +337,81 @@ export default function OperatorConsole() {
                           {marketSelections.map((selection) => (
                             <tr
                               key={selection.id}
-                              className="bg-gray-50 border-b border-gray-200"
+                              className={`border-b border-gray-200 ${
+                                editedSelectionId === selection.id
+                                  ? "bg-yellow-50"
+                                  : "bg-gray-50"
+                              }`}
                             >
                               <td className="px-4 py-1.5 text-gray-600">
                                 {selection.name}
                               </td>
                               <td className="px-2 py-1.5 text-right text-xs text-gray-600">
-                                Back: {selection.backOdds.toFixed(2)} | Lay:{" "}
-                                {selection.layOdds.toFixed(2)} | Liq:{" "}
-                                {selection.liquidity}
+                                <div className="flex items-center justify-end gap-2">
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-[10px] text-gray-500">
+                                      Back
+                                    </span>
+                                    <input
+                                      type="number"
+                                      value={selection.backOdds.toFixed(2)}
+                                      min={1.02}
+                                      step={0.01}
+                                      onChange={(e) => {
+                                        const val = parseFloat(e.target.value);
+                                        if (!isNaN(val)) {
+                                          updateSelection(selection.id, {
+                                            backOdds: val,
+                                          });
+                                          setEditedSelectionId(selection.id);
+                                        }
+                                      }}
+                                      className="w-14 px-1 py-0.5 border border-gray-300 rounded text-[10px] text-right"
+                                    />
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-[10px] text-gray-500">
+                                      Lay
+                                    </span>
+                                    <input
+                                      type="number"
+                                      value={selection.layOdds.toFixed(2)}
+                                      min={1.02}
+                                      step={0.01}
+                                      onChange={(e) => {
+                                        const val = parseFloat(e.target.value);
+                                        if (!isNaN(val)) {
+                                          updateSelection(selection.id, {
+                                            layOdds: val,
+                                          });
+                                          setEditedSelectionId(selection.id);
+                                        }
+                                      }}
+                                      className="w-14 px-1 py-0.5 border border-gray-300 rounded text-[10px] text-right"
+                                    />
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-[10px] text-gray-500">
+                                      Liq
+                                    </span>
+                                    <input
+                                      type="number"
+                                      value={selection.liquidity.toFixed(0)}
+                                      min={0}
+                                      step={10}
+                                      onChange={(e) => {
+                                        const val = parseFloat(e.target.value);
+                                        if (!isNaN(val)) {
+                                          updateSelection(selection.id, {
+                                            liquidity: val,
+                                          });
+                                          setEditedSelectionId(selection.id);
+                                        }
+                                      }}
+                                      className="w-16 px-1 py-0.5 border border-gray-300 rounded text-[10px] text-right"
+                                    />
+                                  </div>
+                                </div>
                               </td>
                               <td></td>
                             </tr>
