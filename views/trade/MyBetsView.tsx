@@ -56,41 +56,45 @@ export default function MyBetsView() {
   const formatCurrency = (value: number) => `£${value.toFixed(2)}`;
 
   return (
-    <div className="p-4 space-y-6 text-xs">
-      <h2 className="text-sm font-semibold text-gray-900">My Bets</h2>
+    <div className="p-4 space-y-6 text-[11px]">
+      <h2 className="text-sm font-semibold text-gray-900 mb-4">My Bets</h2>
 
       {/* Open Bets */}
       <div>
-        <h3 className="text-xs font-semibold text-gray-800 mb-2">Open Bets</h3>
+        <h3 className="text-[11px] font-semibold text-gray-800 mb-2.5 uppercase tracking-wide">
+          Open Bets
+        </h3>
         {openBets.length === 0 ? (
-          <div className="text-[11px] text-gray-500 py-2">No open bets</div>
+          <div className="text-[11px] text-gray-400 text-center py-8">
+            No open bets
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-[11px] border-collapse">
-              <thead className="bg-gray-100">
+              <thead className="bg-gray-100 border-b-2 border-gray-300">
                 <tr>
-                  <th className="px-2 py-1.5 text-left font-semibold text-gray-700 border-b border-gray-300">
+                  <th className="px-3 py-2 text-left font-semibold text-gray-800">
                     Event
                   </th>
-                  <th className="px-2 py-1.5 text-left font-semibold text-gray-700 border-b border-gray-300">
+                  <th className="px-3 py-2 text-left font-semibold text-gray-800">
                     Market
                   </th>
-                  <th className="px-2 py-1.5 text-left font-semibold text-gray-700 border-b border-gray-300">
+                  <th className="px-3 py-2 text-left font-semibold text-gray-800">
                     Selection
                   </th>
-                  <th className="px-2 py-1.5 text-left font-semibold text-gray-700 border-b border-gray-300">
+                  <th className="px-3 py-2 text-left font-semibold text-gray-800">
                     Side
                   </th>
-                  <th className="px-2 py-1.5 text-right font-semibold text-gray-700 border-b border-gray-300">
+                  <th className="px-3 py-2 text-right font-semibold text-gray-800">
                     Odds
                   </th>
-                  <th className="px-2 py-1.5 text-right font-semibold text-gray-700 border-b border-gray-300">
+                  <th className="px-3 py-2 text-right font-semibold text-gray-800">
                     Stake
                   </th>
-                  <th className="px-2 py-1.5 text-right font-semibold text-gray-700 border-b border-gray-300">
+                  <th className="px-3 py-2 text-right font-semibold text-gray-800">
                     Potential Profit
                   </th>
-                  <th className="px-2 py-1.5 text-right font-semibold text-gray-700 border-b border-gray-300">
+                  <th className="px-3 py-2 text-right font-semibold text-gray-800">
                     Status
                   </th>
                 </tr>
@@ -101,26 +105,30 @@ export default function MyBetsView() {
                     key={bet.id}
                     className="hover:bg-gray-50 border-b border-gray-200"
                   >
-                    <td className="px-2 py-1.5 text-gray-900">
+                    <td className="px-3 py-2 text-gray-900 font-medium">
                       {bet.eventName}
                     </td>
-                    <td className="px-2 py-1.5 text-gray-600">
+                    <td className="px-3 py-2 text-gray-600">
                       {bet.marketType}
                     </td>
-                    <td className="px-2 py-1.5 text-gray-600">
+                    <td className="px-3 py-2 text-gray-600">
                       {bet.selectionName}
                     </td>
-                    <td className="px-2 py-1.5 text-gray-600">{bet.side}</td>
-                    <td className="px-2 py-1.5 text-right text-gray-900">
+                    <td className={`px-3 py-2 text-gray-600 font-medium ${
+                      bet.side === "BACK" ? "text-blue-700" : "text-pink-700"
+                    }`}>
+                      {bet.side}
+                    </td>
+                    <td className="px-3 py-2 text-right text-gray-900 font-semibold tabular-nums">
                       {bet.odds.toFixed(2)}
                     </td>
-                    <td className="px-2 py-1.5 text-right text-gray-900">
+                    <td className="px-3 py-2 text-right text-gray-900 font-semibold tabular-nums">
                       {formatCurrency(bet.stake)}
                     </td>
-                    <td className="px-2 py-1.5 text-right text-gray-900">
+                    <td className="px-3 py-2 text-right text-gray-900 font-semibold tabular-nums">
                       {formatCurrency(bet.potentialPayout - bet.stake)}
                     </td>
-                    <td className="px-2 py-1.5 text-right text-gray-600">
+                    <td className="px-3 py-2 text-right text-gray-600">
                       {bet.status}
                     </td>
                   </tr>
@@ -133,40 +141,40 @@ export default function MyBetsView() {
 
       {/* Settled Bets */}
       <div>
-        <h3 className="text-xs font-semibold text-gray-800 mb-2">
+        <h3 className="text-[11px] font-semibold text-gray-800 mb-2.5 uppercase tracking-wide">
           Settled Bets
         </h3>
         {settledBets.length === 0 ? (
-          <div className="text-[11px] text-gray-500 py-2">
+          <div className="text-[11px] text-gray-400 text-center py-8">
             No settled bets yet
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-[11px] border-collapse">
-              <thead className="bg-gray-100">
+              <thead className="bg-gray-100 border-b-2 border-gray-300">
                 <tr>
-                  <th className="px-2 py-1.5 text-left font-semibold text-gray-700 border-b border-gray-300">
+                  <th className="px-3 py-2 text-left font-semibold text-gray-800">
                     Event
                   </th>
-                  <th className="px-2 py-1.5 text-left font-semibold text-gray-700 border-b border-gray-300">
+                  <th className="px-3 py-2 text-left font-semibold text-gray-800">
                     Selection
                   </th>
-                  <th className="px-2 py-1.5 text-left font-semibold text-gray-700 border-b border-gray-300">
+                  <th className="px-3 py-2 text-left font-semibold text-gray-800">
                     Side
                   </th>
-                  <th className="px-2 py-1.5 text-right font-semibold text-gray-700 border-b border-gray-300">
+                  <th className="px-3 py-2 text-right font-semibold text-gray-800">
                     Odds
                   </th>
-                  <th className="px-2 py-1.5 text-right font-semibold text-gray-700 border-b border-gray-300">
+                  <th className="px-3 py-2 text-right font-semibold text-gray-800">
                     Stake
                   </th>
-                  <th className="px-2 py-1.5 text-right font-semibold text-gray-700 border-b border-gray-300">
+                  <th className="px-3 py-2 text-right font-semibold text-gray-800">
                     Result
                   </th>
-                  <th className="px-2 py-1.5 text-right font-semibold text-gray-700 border-b border-gray-300">
+                  <th className="px-3 py-2 text-right font-semibold text-gray-800">
                     Payout
                   </th>
-                  <th className="px-2 py-1.5 text-right font-semibold text-gray-700 border-b border-gray-300">
+                  <th className="px-3 py-2 text-right font-semibold text-gray-800">
                     Settled At
                   </th>
                 </tr>
@@ -177,21 +185,25 @@ export default function MyBetsView() {
                     key={bet.id}
                     className="hover:bg-gray-50 border-b border-gray-200"
                   >
-                    <td className="px-2 py-1.5 text-gray-900">
+                    <td className="px-3 py-2 text-gray-900 font-medium">
                       {bet.eventName}
                     </td>
-                    <td className="px-2 py-1.5 text-gray-600">
+                    <td className="px-3 py-2 text-gray-600">
                       {bet.selectionName}
                     </td>
-                    <td className="px-2 py-1.5 text-gray-600">{bet.side}</td>
-                    <td className="px-2 py-1.5 text-right text-gray-900">
+                    <td className={`px-3 py-2 text-gray-600 font-medium ${
+                      bet.side === "BACK" ? "text-blue-700" : "text-pink-700"
+                    }`}>
+                      {bet.side}
+                    </td>
+                    <td className="px-3 py-2 text-right text-gray-900 font-semibold tabular-nums">
                       {bet.odds.toFixed(2)}
                     </td>
-                    <td className="px-2 py-1.5 text-right text-gray-900">
+                    <td className="px-3 py-2 text-right text-gray-900 font-semibold tabular-nums">
                       {formatCurrency(bet.stake)}
                     </td>
                     <td
-                      className={`px-2 py-1.5 text-right font-semibold ${
+                      className={`px-3 py-2 text-right font-bold ${
                         bet.result === "WON"
                           ? "text-green-700"
                           : "text-red-700"
@@ -199,10 +211,10 @@ export default function MyBetsView() {
                     >
                       {bet.result}
                     </td>
-                    <td className="px-2 py-1.5 text-right text-gray-900">
+                    <td className="px-3 py-2 text-right text-gray-900 font-semibold tabular-nums">
                       {formatCurrency(bet.payout)}
                     </td>
-                    <td className="px-2 py-1.5 text-right text-gray-600">
+                    <td className="px-3 py-2 text-right text-gray-500 text-[10px]">
                       {bet.settledAt
                         ? new Date(bet.settledAt).toLocaleString()
                         : "-"}

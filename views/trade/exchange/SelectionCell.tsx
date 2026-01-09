@@ -32,22 +32,31 @@ export default function SelectionCell({
 
   const disabled = selection.liquidity <= 0;
 
+  // Find best prices across all selections (simplified - in real exchange would compare across market)
+  // For MVP, we'll just emphasize if odds are competitive
+  const isBestBack = true; // Simplified - would need market context
+  const isBestLay = true; // Simplified - would need market context
+
   return (
-    <div className="flex flex-col gap-px">
+    <div className="flex flex-col gap-[1px]">
       {/* Back Row (Blue) */}
       <button
         onClick={() =>
           onSelectionClick(eventId, eventName, marketId, selection, "BACK")
         }
         disabled={disabled}
-        className={`w-full px-2 py-1 text-xs font-semibold flex items-center justify-between ${
+        className={`w-full px-2 py-1.5 text-[11px] flex items-center justify-between transition-colors ${
           disabled
-            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-blue-600 text-white hover:bg-blue-700"
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-50"
+            : "bg-blue-700 text-white hover:bg-blue-800 cursor-pointer"
         }`}
       >
-        <span>{selection.backOdds.toFixed(2)}</span>
-        <span className="text-xs opacity-90">{formatLiquidity(selection.liquidity)}</span>
+        <span className={`tabular-nums ${isBestBack && !disabled ? "font-bold" : "font-semibold"}`}>
+          {selection.backOdds.toFixed(2)}
+        </span>
+        <span className="text-[10px] opacity-75 tabular-nums">
+          {formatLiquidity(selection.liquidity)}
+        </span>
       </button>
       {/* Lay Row (Pink) */}
       <button
@@ -55,14 +64,18 @@ export default function SelectionCell({
           onSelectionClick(eventId, eventName, marketId, selection, "LAY")
         }
         disabled={disabled}
-        className={`w-full px-2 py-1 text-xs font-semibold flex items-center justify-between ${
+        className={`w-full px-2 py-1.5 text-[11px] flex items-center justify-between transition-colors ${
           disabled
-            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-pink-600 text-white hover:bg-pink-700"
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-50"
+            : "bg-pink-700 text-white hover:bg-pink-800 cursor-pointer"
         }`}
       >
-        <span>{selection.layOdds.toFixed(2)}</span>
-        <span className="text-xs opacity-90">{formatLiquidity(selection.liquidity)}</span>
+        <span className={`tabular-nums ${isBestLay && !disabled ? "font-bold" : "font-semibold"}`}>
+          {selection.layOdds.toFixed(2)}
+        </span>
+        <span className="text-[10px] opacity-75 tabular-nums">
+          {formatLiquidity(selection.liquidity)}
+        </span>
       </button>
     </div>
   );

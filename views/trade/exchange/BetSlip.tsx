@@ -81,67 +81,67 @@ export default function BetSlip({ selection, onBetPlaced }: BetSlipProps) {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="bg-gray-200 px-3 py-2 border-b border-gray-300">
-        <div className="text-xs font-semibold text-gray-900">Bet Slip</div>
+    <div className="h-full flex flex-col bg-white">
+      <div className="bg-gray-100 px-3 py-2.5 border-b-2 border-gray-300">
+        <div className="text-[11px] font-semibold text-gray-900 uppercase tracking-wide">Bet Slip</div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">
         {selection ? (
-          <div className="space-y-3">
-            <div>
-              <div className="text-xs text-gray-600 mb-1">Event</div>
-              <div className="text-xs font-medium text-gray-900">
+          <div className="space-y-4">
+            <div className="border-b border-gray-200 pb-3">
+              <div className="text-[10px] text-gray-500 uppercase mb-1">Event</div>
+              <div className="text-[11px] font-medium text-gray-900">
                 {selection.eventName}
               </div>
             </div>
 
-            <div>
-              <div className="text-xs text-gray-600 mb-1">Market</div>
-              <div className="text-xs font-medium text-gray-900">
+            <div className="border-b border-gray-200 pb-3">
+              <div className="text-[10px] text-gray-500 uppercase mb-1">Market</div>
+              <div className="text-[11px] font-medium text-gray-900">
                 Match Odds
               </div>
             </div>
 
-            <div>
-              <div className="text-xs text-gray-600 mb-1">Selection</div>
-              <div className="text-xs font-medium text-gray-900">
+            <div className="border-b border-gray-200 pb-3">
+              <div className="text-[10px] text-gray-500 uppercase mb-1">Selection</div>
+              <div className="text-[11px] font-medium text-gray-900">
                 {selection.selection.name}
               </div>
             </div>
 
-            <div>
-              <div className="text-xs text-gray-600 mb-1">Side</div>
+            <div className="border-b border-gray-200 pb-3">
+              <div className="text-[10px] text-gray-500 uppercase mb-1">Side</div>
               <div
-                className={`text-xs font-medium ${
-                  selection.side === "BACK" ? "text-blue-600" : "text-pink-600"
+                className={`text-[11px] font-semibold ${
+                  selection.side === "BACK" ? "text-blue-700" : "text-pink-700"
                 }`}
               >
                 {selection.side}
               </div>
             </div>
 
-            <div>
-              <div className="text-xs text-gray-600 mb-1">Odds</div>
-              <div className="flex items-center gap-2">
-                <div className="text-xs font-medium text-gray-900">
+            <div className="border-b border-gray-200 pb-3">
+              <div className="text-[10px] text-gray-500 uppercase mb-1.5">Odds</div>
+              <div className="flex items-baseline gap-2">
+                <div className="text-base font-bold text-gray-900 tabular-nums">
                   {currentOdds.toFixed(2)}
                 </div>
                 {oddsMoved && originalOdds && (
-                  <div className="text-xs text-gray-500">
+                  <div className="text-[10px] text-gray-400 tabular-nums">
                     (was {originalOdds.toFixed(2)})
                   </div>
                 )}
               </div>
               {oddsMoved && (
-                <div className="text-xs text-blue-600 mt-0.5">
+                <div className="text-[10px] text-blue-600 mt-1">
                   Odds moved after your bet
                 </div>
               )}
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+            <div className="border-b border-gray-200 pb-3">
+              <label className="block text-[10px] text-gray-500 uppercase mb-1.5 font-medium">
                 Stake
               </label>
               <input
@@ -152,10 +152,10 @@ export default function BetSlip({ selection, onBetPlaced }: BetSlipProps) {
                 min="0"
                 step="0.01"
                 max={maxStake || wallet.balance}
-                disabled={market?.status !== "OPEN"}
-                className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                disabled={market?.status !== "OPEN" || availableLiquidity <= 0}
+                className="w-full px-2.5 py-2 border border-gray-300 rounded text-sm text-gray-900 font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
               />
-              <div className="text-xs text-gray-500 mt-0.5">
+              <div className="text-[10px] text-gray-500 mt-1.5 tabular-nums">
                 Balance: £{wallet.balance.toFixed(2)}{" "}
                 {availableLiquidity > 0 && (
                   <>
@@ -164,55 +164,55 @@ export default function BetSlip({ selection, onBetPlaced }: BetSlipProps) {
                 )}
               </div>
               {insufficientLiquidity && (
-                <div className="text-xs text-red-600 mt-0.5">
+                <div className="text-[10px] text-red-600 mt-1 font-medium">
                   Insufficient liquidity at this price
                 </div>
               )}
             </div>
 
             {stakeNum > 0 && (
-              <div className="bg-gray-100 p-2 rounded">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-gray-600">Potential Profit</span>
-                  <span className="font-semibold text-gray-900">
+              <div className="bg-gray-50 border border-gray-200 p-2.5 rounded">
+                <div className="flex justify-between items-baseline mb-1">
+                  <span className="text-[10px] text-gray-600 uppercase">Potential Profit</span>
+                  <span className="text-base font-bold text-gray-900 tabular-nums">
                     £{potentialProfit.toFixed(2)}
                   </span>
                 </div>
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-[10px] text-gray-500 mt-1 tabular-nums">
                   Based on odds: {currentOdds.toFixed(2)}
                 </div>
               </div>
             )}
 
             {market && market.status !== "OPEN" && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded p-2">
-                <p className="text-xs text-yellow-800">
+              <div className="bg-yellow-50 border border-yellow-300 rounded p-2">
+                <p className="text-[10px] text-yellow-800 font-medium">
                   Market is {market.status.toLowerCase()}
                 </p>
               </div>
             )}
           </div>
         ) : (
-          <div className="text-xs text-gray-500 text-center py-8">
+          <div className="text-[11px] text-gray-400 text-center py-12">
             Click Back or Lay odds to add a bet
           </div>
         )}
       </div>
 
-      <div className="border-t border-gray-300 bg-gray-100 p-3">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-gray-600">Balance</span>
-          <span className="text-sm font-semibold text-gray-900">
+      <div className="border-t-2 border-gray-300 bg-gray-50 p-3">
+        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200">
+          <span className="text-[10px] text-gray-600 uppercase">Balance</span>
+          <span className="text-sm font-bold text-gray-900 tabular-nums">
             £{wallet.balance.toFixed(2)}
           </span>
         </div>
         <button
           onClick={handlePlaceBet}
           disabled={!isValid}
-          className={`w-full py-2 text-xs font-medium transition-colors ${
+          className={`w-full py-2.5 text-sm font-bold transition-colors ${
             isValid
-              ? "bg-blue-600 text-white hover:bg-blue-700"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              ? "bg-blue-700 text-white hover:bg-blue-800 active:bg-blue-900 cursor-pointer"
+              : "bg-gray-300 text-gray-400 cursor-not-allowed"
           }`}
         >
           Place Bet

@@ -25,31 +25,31 @@ export default function WalletView() {
   const formatCurrency = (value: number) => `£${value.toFixed(2)}`;
 
   return (
-    <div className="p-4 space-y-4 text-xs">
-      <h2 className="text-sm font-semibold text-gray-900 mb-2">Wallet</h2>
+    <div className="p-4 space-y-5 text-[11px]">
+      <h2 className="text-sm font-semibold text-gray-900 mb-3">Wallet</h2>
       <div className="grid grid-cols-3 gap-3 max-w-xl">
-        <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50">
-          <div className="text-[10px] text-gray-500 uppercase mb-1">
+        <div className="border border-gray-300 rounded px-3 py-2.5 bg-gray-50">
+          <div className="text-[10px] text-gray-500 uppercase mb-1.5 tracking-wide">
             Starting Balance
           </div>
-          <div className="text-sm font-semibold text-gray-900">
+          <div className="text-sm font-bold text-gray-900 tabular-nums">
             {formatCurrency(STARTING_BALANCE)}
           </div>
         </div>
-        <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50">
-          <div className="text-[10px] text-gray-500 uppercase mb-1">
+        <div className="border border-gray-300 rounded px-3 py-2.5 bg-gray-50">
+          <div className="text-[10px] text-gray-500 uppercase mb-1.5 tracking-wide">
             Current Balance
           </div>
-          <div className="text-sm font-semibold text-gray-900">
+          <div className="text-sm font-bold text-gray-900 tabular-nums">
             {formatCurrency(currentBalance)}
           </div>
         </div>
-        <div className="border border-gray-200 rounded px-3 py-2 bg-gray-50">
-          <div className="text-[10px] text-gray-500 uppercase mb-1">
+        <div className="border border-gray-300 rounded px-3 py-2.5 bg-gray-50">
+          <div className="text-[10px] text-gray-500 uppercase mb-1.5 tracking-wide">
             P / L vs Start
           </div>
           <div
-            className={`text-sm font-semibold ${
+            className={`text-sm font-bold tabular-nums ${
               pnlFromStart > 0
                 ? "text-green-700"
                 : pnlFromStart < 0
@@ -62,42 +62,42 @@ export default function WalletView() {
         </div>
       </div>
 
-      <div className="max-w-xl mt-4">
-        <h3 className="text-xs font-semibold text-gray-800 mb-2">
+      <div className="max-w-xl mt-5">
+        <h3 className="text-[11px] font-semibold text-gray-800 mb-2.5 uppercase tracking-wide">
           Settled Summary
         </h3>
         <table className="w-full text-[11px] border-collapse">
-          <thead className="bg-gray-100">
+          <thead className="bg-gray-100 border-b-2 border-gray-300">
             <tr>
-              <th className="px-2 py-1.5 text-left font-semibold text-gray-700 border-b border-gray-300">
+              <th className="px-3 py-2 text-left font-semibold text-gray-800">
                 Metric
               </th>
-              <th className="px-2 py-1.5 text-right font-semibold text-gray-700 border-b border-gray-300">
+              <th className="px-3 py-2 text-right font-semibold text-gray-800">
                 Amount
               </th>
             </tr>
           </thead>
           <tbody>
-            <tr className="border-b border-gray-200">
-              <td className="px-2 py-1.5 text-gray-600">
+            <tr className="border-b border-gray-200 hover:bg-gray-50">
+              <td className="px-3 py-2 text-gray-700">
                 Total Staked (Settled)
               </td>
-              <td className="px-2 py-1.5 text-right font-medium text-gray-900">
+              <td className="px-3 py-2 text-right font-semibold text-gray-900 tabular-nums">
                 {formatCurrency(totalStaked)}
               </td>
             </tr>
-            <tr className="border-b border-gray-200">
-              <td className="px-2 py-1.5 text-gray-600">
+            <tr className="border-b border-gray-200 hover:bg-gray-50">
+              <td className="px-3 py-2 text-gray-700">
                 Total Returned (Settled)
               </td>
-              <td className="px-2 py-1.5 text-right font-medium text-gray-900">
+              <td className="px-3 py-2 text-right font-semibold text-gray-900 tabular-nums">
                 {formatCurrency(totalReturned)}
               </td>
             </tr>
-            <tr>
-              <td className="px-2 py-1.5 text-gray-600">Net P / L (Settled)</td>
+            <tr className="hover:bg-gray-50">
+              <td className="px-3 py-2 text-gray-700 font-medium">Net P / L (Settled)</td>
               <td
-                className={`px-2 py-1.5 text-right font-semibold ${
+                className={`px-3 py-2 text-right font-bold tabular-nums ${
                   totalPnL > 0
                     ? "text-green-700"
                     : totalPnL < 0

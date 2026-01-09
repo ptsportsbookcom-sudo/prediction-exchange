@@ -29,7 +29,7 @@ export default function ExchangeGrid({
 }: ExchangeGridProps) {
   if (gridData.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500 text-xs">
+      <div className="flex items-center justify-center h-full text-gray-400 text-[11px]">
         No open markets available
       </div>
     );
@@ -37,43 +37,43 @@ export default function ExchangeGrid({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-xs border-collapse">
-        <thead className="bg-gray-100 sticky top-0 z-10">
+      <table className="w-full text-[11px] border-collapse">
+        <thead className="bg-gray-50 sticky top-0 z-10 border-b-2 border-gray-300">
           <tr>
-            <th className="px-3 py-2 text-left font-semibold text-gray-700 border-b border-gray-300">
+            <th className="px-3 py-2.5 text-left font-semibold text-gray-800 border-r border-gray-200">
               Event
             </th>
-            <th className="px-3 py-2 text-right font-semibold text-gray-700 border-b border-gray-300 w-20">
+            <th className="px-3 py-2.5 text-right font-semibold text-gray-800 border-r border-gray-200 w-20">
               Volume
             </th>
-            <th className="px-3 py-2 text-center font-semibold text-gray-700 border-b border-gray-300 w-32">
+            <th className="px-3 py-2.5 text-center font-semibold text-gray-800 border-r border-gray-200 w-32 bg-gray-50">
               1
             </th>
-            <th className="px-3 py-2 text-center font-semibold text-gray-700 border-b border-gray-300 w-32">
+            <th className="px-3 py-2.5 text-center font-semibold text-gray-800 border-r border-gray-200 w-32 bg-gray-100">
               X
             </th>
-            <th className="px-3 py-2 text-center font-semibold text-gray-700 border-b border-gray-300 w-32">
+            <th className="px-3 py-2.5 text-center font-semibold text-gray-800 w-32 bg-gray-50">
               2
             </th>
           </tr>
         </thead>
         <tbody>
-          {gridData.map((row) => {
+          {gridData.map((row, rowIndex) => {
             if (!row) return null;
             const { event, market, homeSelection, drawSelection, awaySelection, totalVolume } = row;
 
             return (
               <tr
                 key={event.id}
-                className="hover:bg-gray-50 border-b border-gray-200"
+                className="border-b border-gray-200 hover:bg-gray-50"
               >
-                <td className="px-3 py-2 text-gray-900 font-medium">
+                <td className="px-3 py-2.5 text-gray-900 font-medium border-r border-gray-200 bg-white">
                   {event.name}
                 </td>
-                <td className="px-3 py-2 text-right text-gray-600 font-medium">
+                <td className="px-3 py-2.5 text-right text-gray-700 font-medium tabular-nums border-r border-gray-200 bg-white">
                   £{totalVolume.toLocaleString()}
                 </td>
-                <td className="px-3 py-2">
+                <td className="px-3 py-2.5 border-r border-gray-200 bg-gray-50">
                   {homeSelection ? (
                     <SelectionCell
                       selection={homeSelection}
@@ -83,10 +83,10 @@ export default function ExchangeGrid({
                       onSelectionClick={onSelectionClick}
                     />
                   ) : (
-                    <div className="text-gray-400 text-center">-</div>
+                    <div className="text-gray-300 text-center text-[10px]">-</div>
                   )}
                 </td>
-                <td className="px-3 py-2">
+                <td className="px-3 py-2.5 border-r border-gray-200 bg-gray-100">
                   {drawSelection ? (
                     <SelectionCell
                       selection={drawSelection}
@@ -96,10 +96,10 @@ export default function ExchangeGrid({
                       onSelectionClick={onSelectionClick}
                     />
                   ) : (
-                    <div className="text-gray-400 text-center">-</div>
+                    <div className="text-gray-300 text-center text-[10px]">-</div>
                   )}
                 </td>
-                <td className="px-3 py-2">
+                <td className="px-3 py-2.5 bg-gray-50">
                   {awaySelection ? (
                     <SelectionCell
                       selection={awaySelection}
@@ -109,7 +109,7 @@ export default function ExchangeGrid({
                       onSelectionClick={onSelectionClick}
                     />
                   ) : (
-                    <div className="text-gray-400 text-center">-</div>
+                    <div className="text-gray-300 text-center text-[10px]">-</div>
                   )}
                 </td>
               </tr>
